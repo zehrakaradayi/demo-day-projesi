@@ -1,12 +1,13 @@
-// SkillSwap — Prisma schema (MVP scope)
-// Kaynak: SkillSwap Master Ürün Brifi V2, bölüm 20 "Veri Modeli" + MVP kapsamı (bölüm 19).
+// SkillSwap — Prisma schema (MVP + matching-education V1/V2 scope)
+// Kaynak: SkillSwap Master Ürün Brifi V2, bölüm 20 "Veri Modeli" + MVP kapsamı (bölüm 19)
+// + Branch 2 Brifi (feature/matching-education): Skill DNA, Skill Passport, Skill Evolution,
+// Skill Chain, Skill Credits, Missions.
 //
 // Notlar:
 // - User.id, Supabase Auth'taki auth.users.id (uuid) ile birebir aynıdır ve kayıt
 //   sırasında uygulama tarafından atanır (bu yüzden @default yok).
-// - V1/V2 kapsamındaki tablolar (Community, Skill DNA/Passport, Missions, Skill Chain,
-//   Skill Stories) bilinçli olarak bu şemada YOK — MVP'de gerçek özellik olmayan
-//   yapı için şema kurmuyoruz. Bkz. docs/PLANNING.md.
+// - Community ve Skill Stories (V1/V2, başka branch'lerin sorumluluğu) bilinçli olarak
+//   bu şemada YOK.
 
 generator client {
   provider = "prisma-client"
@@ -153,6 +154,31 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum MissionType {
+  SKILL
+  GUIDE
+}
+
+enum MissionStatus {
+  ASSIGNED
+  COMPLETED
+}
+
+enum SkillCreditSource {
+  TEACHING_SESSION
+  GUIDE_SESSION
+  CHAIN_EXCHANGE
+  OTHER
+}
+
+enum GamificationLevel {
+  BEGINNER
+  ACTIVE_LEARNER
+  SKILL_SHARER
+  MENTOR
+  SKILL_MASTER
+}
+
 // ---------- Kullanıcı & Lifestyle Interview (bölüm 3) ----------
 
 model User {
@@ -197,6 +223,12 @@ model User {
   reportsMade     Report[] @relation("ReportsMade")
   reportsReceived Report[] @relation("ReportsReceived")
 
+  skillLevelEvents SkillLevelEvent[]
+  userMissions     UserMission[]
+  userAchievements UserAchievement[]
+  skillCredits     SkillCreditLedger[] @relation("SkillCreditsOwner")
+  skillCreditsSent SkillCreditLedger[] @relation("SkillCreditsCounterparty")
+
   @@index([city, country])
   @@index([network])
 }
@@ -233,6 +265,9 @@ model Skill {
   category      String
   userSkills    UserSkill[]
   skillSessions SkillSession[]
+
+  skillLevelEvents SkillLevelEvent[]
+  missions         Mission[]
 }
 
 model UserSkill {
@@ -482,4 +517,88 @@ model Report {
   createdAt  DateTime     @default(now())
 
   @@index([reportedId])
+}
+
+// ---------- Skill DNA + Skill Evolution (bölüm 11, Branch 2 brifi bölüm 6) ----------
+// UserSkill.level "şu anki" durum; her level değişiminde buraya bir snapshot düşülür,
+// böylece "3 ay önce Beginner → bugün Intermediate" gibi bir geçmiş oluşur. DNA (kategori
+// dağılımı) ise UserSkill'den canlı hesaplanır, ayrı tablo gerekmez.
+model SkillLevelEvent {
+  id         String     @id @default(uuid())
+  userId     String     @db.Uuid
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId    String
+  skill      Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  mode       SkillMode
+  level      SkillLevel
+  recordedAt DateTime   @default(now())
+
+  @@index([userId, skillId])
+}
+
+// ---------- Missions + Gamification (bölüm 13, Branch 2 brifi bölüm 13) ----------
+
+model Mission {
+  id             String        @id @default(uuid())
+  title          String
+  description    String
+  type           MissionType
+  skillId        String?
+  skill          Skill?        @relation(fields: [skillId], references: [id])
+  instructions   String
+  evidencePrompt String? // "kanıt olarak ne paylaşman gerekiyor" — ör. "ekran görüntüsü / kısa özet"
+  rewardPoints   Int           @default(10)
+  isActive       Boolean       @default(true)
+  userMissions   UserMission[]
+}
+
+model UserMission {
+  id          String        @id @default(uuid())
+  userId      String        @db.Uuid
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missionId   String
+  mission     Mission       @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  status      MissionStatus @default(ASSIGNED)
+  evidence    String?
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@unique([userId, missionId])
+}
+
+model Achievement {
+  id               String            @id @default(uuid())
+  code             String            @unique // ör. "FIRST_EXCHANGE", "FIRST_GUIDE_SESSION"
+  title            String
+  description      String
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String      @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+// ---------- Skill Credits (bölüm 12, Branch 2 brifi bölüm 12) ----------
+// ContributionLedger (yukarıda) "katkı puanı"dır (görünürlük/rozet için). Skill Credits ise
+// brifin ayrı bir ekonomisi: öğretilen zamanın başka bir kişiden öğrenmeye dönüşmesini
+// sağlayan, karşı tarafı da tutan bir defter.
+model SkillCreditLedger {
+  id                String            @id @default(uuid())
+  userId            String            @db.Uuid
+  user              User              @relation("SkillCreditsOwner", fields: [userId], references: [id], onDelete: Cascade)
+  amount            Int
+  source            SkillCreditSource
+  counterpartyId    String?           @db.Uuid
+  counterparty      User?             @relation("SkillCreditsCounterparty", fields: [counterpartyId], references: [id])
+  relatedSessionId  String? // GuideSession veya SkillSession id'si (polymorphic, FK yok)
+  createdAt         DateTime          @default(now())
+
+  @@index([userId])
 }
