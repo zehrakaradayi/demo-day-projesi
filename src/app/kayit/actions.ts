@@ -9,11 +9,10 @@ export type SignupState = {
   error: string | null;
 };
 
-// DEMO MODU: Supabase e-posta kotası dolduğu için kayıt akışı, doğrulama
-// e-postası göndermek yerine admin API ile kullanıcıyı doğrudan
-// email_confirm: true olarak oluşturuyor. Kota sorunu çözülünce (veya özel
-// SMTP eklenince) bu fonksiyon supabase.auth.signUp() çağrısına geri
-// döndürülmeli.
+// DEMO MODU: Bu bir demo ürünü olduğu için e-posta doğrulaması bilinçli
+// olarak devre dışı bırakıldı. Kayıt akışı, doğrulama e-postası göndermek
+// yerine admin API ile kullanıcıyı doğrudan email_confirm: true olarak
+// oluşturur.
 export async function signup(
   _prevState: SignupState,
   formData: FormData,
