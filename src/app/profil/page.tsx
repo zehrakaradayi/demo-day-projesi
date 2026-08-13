@@ -1,11 +1,11 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { logout } from "@/lib/auth-actions";
 import { SkillMode, YearStatus } from "@/generated/prisma/client";
 import { Avatar } from "@/components/avatar";
+import { Section, Chip, Empty } from "@/components/ui";
 import { AddSkillForm } from "./add-skill-form";
 import { addLearnSkill, addTeachSkill, removeUserSkill } from "./actions";
 import {
@@ -18,33 +18,6 @@ import {
   SOCIAL_ENERGY_LABELS,
   YEAR_STATUS_LABELS,
 } from "@/lib/labels";
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border border-neutral-200 p-5">
-      <h2 className="text-sm font-medium text-neutral-500">{title}</h2>
-      <div className="mt-2">{children}</div>
-    </section>
-  );
-}
-
-function Empty({ text = "Henüz eklenmedi." }: { text?: string }) {
-  return <p className="text-sm text-neutral-500">{text}</p>;
-}
-
-function Chip({ children }: { children: ReactNode }) {
-  return (
-    <li className="rounded-full border border-neutral-300 px-3 py-1 text-sm">
-      {children}
-    </li>
-  );
-}
 
 export default async function ProfilPage() {
   const supabase = await createClient();
@@ -277,8 +250,23 @@ export default async function ProfilPage() {
         {education ? (
           <div className="flex flex-col gap-2">
             <p>
-              {education.school.name} —{" "}
-              {education.department?.name ?? "Bölüm belirtilmemiş"}
+              <Link
+                href={`/schools/${education.schoolId}`}
+                className="font-medium text-violet-600 hover:underline"
+              >
+                {education.school.name}
+              </Link>
+              {" — "}
+              {education.department ? (
+                <Link
+                  href={`/departments/${education.department.id}`}
+                  className="font-medium text-violet-600 hover:underline"
+                >
+                  {education.department.name}
+                </Link>
+              ) : (
+                "Bölüm belirtilmemiş"
+              )}
             </p>
             <div className="flex flex-wrap gap-2">
               {education.yearStatus && (

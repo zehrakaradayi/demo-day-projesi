@@ -52,6 +52,11 @@ export const MATCH_MODE_PREFERENCE_LABELS = {
   NO_PREFERENCE: "Fark etmez",
 } as const;
 
+export const SCHOOL_TYPE_LABELS: Record<string, string> = {
+  university: "Üniversite",
+  high_school: "Lise",
+};
+
 export const BUDGET_LEVEL_LABELS: Record<number, string> = {
   1: "Düşük",
   2: "Orta",

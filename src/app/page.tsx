@@ -4,7 +4,7 @@ const AREAS = [
   { href: "/kesfet", label: "Keşfet" },
   { href: "/skills", label: "Skill Exchange" },
   { href: "/dersler", label: "Dersler" },
-  { href: "/okullar", label: "Okul & Bölüm" },
+  { href: "/schools", label: "Okul & Bölüm" },
   { href: "/eslesme", label: "Eşleşme" },
   { href: "/sohbet", label: "Sohbet" },
   { href: "/meetup", label: "Meetup" },

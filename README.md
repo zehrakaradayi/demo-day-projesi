@@ -35,22 +35,22 @@ docs/
 
 ### Route iskeleti (MVP)
 
-Her route şu an bir placeholder (`PlaceholderPage`) render ediyor ve brifin ilgili
-bölümüne referans veriyor — hangi ekranın hangi işi karşıladığını görmek için
-`src/app/**/page.tsx` dosyalarını açman yeterli.
+Henüz implement edilmemiş route'lar bir placeholder (`PlaceholderPage`) render
+ediyor ve brifin ilgili bölümüne referans veriyor — hangi ekranın hangi işi
+karşıladığını görmek için `src/app/**/page.tsx` dosyalarını açman yeterli.
 
 | Route | Brif bölümü | Açıklama |
 |---|---|---|
 | `/giris`, `/kayit` | Auth | Supabase Auth |
-| `/onboarding` | 3 | Lifestyle Interview |
+| `/onboarding` | 3 | Lifestyle Interview (implement edildi) |
 | `/kesfet` | 17 | Keşfet hub'ı (Türkiye/Global, filtreler) |
 | `/skills` | 4 | Skill Exchange |
 | `/dersler` | 4 | Okul dersleri / peer-learning |
-| `/okullar`, `/okullar/[schoolId]`, `/okullar/[schoolId]/bolumler/[departmentId]` | 5 | Okul & Bölüm Ağı |
+| `/schools`, `/schools/[schoolId]`, `/departments/[departmentId]` | 5 | Okul & Bölüm Ağı (foundation implement edildi — guide/verification akışları Branch 2) |
 | `/eslesme` | 6, 17 | AI Match Engine sonuçları |
 | `/sohbet`, `/sohbet/[conversationId]` | 8, 9 | Chat + AI özellikleri |
 | `/meetup` | 9, 17 | AI Meetup Planner |
-| `/profil` | 17 | Skill DNA, Passport, Guide profile, Trust |
+| `/profil` | 17 | Skill DNA, Teach/Learn skills, School/Department, Passport, Trust (temel profil implement edildi) |
 
 ## Veri Modeli
 
