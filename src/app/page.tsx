@@ -6,6 +6,7 @@ const AREAS = [
   { href: "/dersler", label: "Dersler" },
   { href: "/okullar", label: "Okul & Bölüm" },
   { href: "/eslesme", label: "Eşleşme" },
+  { href: "/pasaport", label: "Skill Pasaport" },
   { href: "/sohbet", label: "Sohbet" },
   { href: "/meetup", label: "Meetup" },
   { href: "/profil", label: "Profil" },

@@ -1,7 +1,8 @@
 import { requireCurrentUser, extractAsParam } from "@/lib/matching-education/current-user";
 import { DevUserSwitcher } from "@/lib/matching-education/dev-user-switcher";
 import { computeMatches } from "@/lib/matching-education/match-engine";
-import { PageHeader, Card, Badge, EmptyState, buttonClass, buttonSecondaryClass } from "@/lib/matching-education/ui";
+import { findSkillChains } from "@/lib/matching-education/skill-chain";
+import { PageHeader, Section, Card, Badge, EmptyState, buttonClass, buttonSecondaryClass } from "@/lib/matching-education/ui";
 import { MATCH_STATUS_LABELS, NETWORK_LABELS } from "@/lib/matching-education/labels";
 import { refreshMatchesAction, likeMatchAction, passMatchAction } from "./actions";
 
@@ -17,6 +18,7 @@ export default async function EslesmePage({
   const user = await requireCurrentUser(asParam);
   const allMatches = await computeMatches(user.id);
   const matches = networkFilter ? allMatches.filter((m) => m.network === networkFilter) : allMatches;
+  const skillChains = await findSkillChains(user.id);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
@@ -132,6 +134,25 @@ export default async function EslesmePage({
           ))}
         </div>
       )}
+
+      {skillChains.length > 0 ? (
+        <Section title="Skill Chain — dolaylı öğrenme yolları">
+          <div className="space-y-2">
+            {skillChains.map((chain, i) => (
+              <Card key={i}>
+                <p className="mb-1 text-sm font-medium">
+                  &quot;{chain.forSkillName}&quot; için doğrudan takas yok, ama zincir var:
+                </p>
+                <p className="text-sm text-neutral-600">
+                  Sen → <span className="font-medium">{chain.steps[0].name}</span> ({chain.steps[0].teachesSkillName}{" "}
+                  öğretir) → <span className="font-medium">{chain.steps[1].name}</span> ({chain.steps[1].teachesSkillName}{" "}
+                  öğretir)
+                </p>
+              </Card>
+            ))}
+          </div>
+        </Section>
+      ) : null}
     </main>
   );
 }
