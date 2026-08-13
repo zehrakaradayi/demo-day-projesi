@@ -8,6 +8,8 @@ import {
   upsertUserSkill,
 } from "@/lib/matching-education/queries/skills";
 import { parseEnum, requireString } from "@/lib/matching-education/form-utils";
+import { recordSkillLevelEvent } from "@/lib/matching-education/queries/passport";
+import { checkAndAwardAchievements } from "@/lib/matching-education/queries/missions";
 import {
   SkillMode,
   SkillLevel,
@@ -51,7 +53,11 @@ export async function upsertUserSkillAction(formData: FormData) {
     experienceYears: Number.isFinite(experienceYears) ? experienceYears! : null,
   });
 
+  await recordSkillLevelEvent(user.id, skillId, mode, level);
+  await checkAndAwardAchievements(user.id);
+
   revalidatePath("/skills");
+  revalidatePath("/pasaport");
 }
 
 export async function deleteUserSkillAction(formData: FormData) {

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { awardSkillCredits } from "@/lib/matching-education/queries/skill-credits";
+import { checkAndAwardAchievements } from "@/lib/matching-education/queries/missions";
 
 /**
  * Brif bölüm 5 "Rehberlik Session'ları ile puan kazanma": 30 dk → +30, 60 dk → +60.
@@ -15,14 +17,28 @@ export async function awardGuideSessionPoints(sessionId: string) {
   const existingEntry = await prisma.contributionLedger.findFirst({ where: { guideSessionId: sessionId } });
   if (existingEntry) return existingEntry;
 
-  return prisma.contributionLedger.create({
+  const points = pointsForDuration(session.durationMinutes);
+
+  const entry = await prisma.contributionLedger.create({
     data: {
       userId: session.guideId,
-      points: pointsForDuration(session.durationMinutes),
+      points,
       source: "GUIDE_SESSION",
       guideSessionId: sessionId,
     },
   });
+
+  await awardSkillCredits({
+    userId: session.guideId,
+    amount: points,
+    source: "GUIDE_SESSION",
+    counterpartyId: session.participantId,
+    relatedSessionId: sessionId,
+  });
+
+  await checkAndAwardAchievements(session.guideId);
+
+  return entry;
 }
 
 export async function getContributionTotal(userId: string) {

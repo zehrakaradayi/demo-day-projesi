@@ -65,6 +65,19 @@ export const NETWORK_LABELS: Record<string, string> = {
   GLOBAL: "🌍 Global",
 };
 
+export const GAMIFICATION_LEVEL_LABELS: Record<string, string> = {
+  BEGINNER: "Beginner",
+  ACTIVE_LEARNER: "Active Learner",
+  SKILL_SHARER: "Skill Sharer",
+  MENTOR: "Mentor",
+  SKILL_MASTER: "Skill Master",
+};
+
+export const MISSION_STATUS_LABELS: Record<string, string> = {
+  ASSIGNED: "Devam ediyor",
+  COMPLETED: "Tamamlandı",
+};
+
 export const GUIDE_TOPIC_SUGGESTIONS = [
   "Bölümümü tanıtabilirim",
   "Hazırlık nasıl?",
