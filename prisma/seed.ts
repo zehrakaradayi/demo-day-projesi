@@ -177,6 +177,65 @@ async function main() {
   await seedDemoUsers({ skillsByName, topicsByKey, schoolsByName, departmentsByKey });
 
   console.log("Seed tamamlandı: demo kullanıcılar (matching-education).");
+
+  await seedMissionsAndAchievements(skillsByName);
+
+  console.log("Seed tamamlandı: missions, achievements.");
+}
+
+async function seedMissionsAndAchievements(skillsByName: Map<string, Skill>) {
+  const ACHIEVEMENTS = [
+    { code: "FIRST_EXCHANGE", title: "İlk Exchange", description: "İlk skill'ini ekledin." },
+    { code: "FIRST_GUIDE_SESSION", title: "İlk Guide Session", description: "İlk rehberlik session'ını tamamladın." },
+    { code: "TEN_PEOPLE_HELPED", title: "10 Kişiye Yardım", description: "10 farklı kişiye rehberlik sağladın." },
+    { code: "SCHOOL_GUIDE", title: "School Guide", description: "Okulunda aktif bir rehber oldun." },
+  ];
+  for (const a of ACHIEVEMENTS) {
+    await prisma.achievement.upsert({ where: { code: a.code }, update: {}, create: a });
+  }
+
+  const MISSIONS: { title: string; description: string; type: "SKILL" | "GUIDE"; skillName?: string; instructions: string; rewardPoints: number }[] = [
+    {
+      title: "Python ile küçük bir proje paylaş",
+      description: "Öğrendiğin/öğrettiğin bir Python konusunu gerçek hayatta uygula.",
+      type: "SKILL",
+      skillName: "Python",
+      instructions: "Kısa bir Python scripti yaz ve session partnerine göster.",
+      rewardPoints: 15,
+    },
+    {
+      title: "Bir arkadaşına bölümünü tanıt",
+      description: "Guide Mission: bölümün hakkında birine rehberlik et.",
+      type: "GUIDE",
+      instructions: "Bölüm/okulun hakkında 30 dakikalık bir 'Bölümü Tanıma' session'ı yap.",
+      rewardPoints: 30,
+    },
+    {
+      title: "Yeni bir dil pratiği yap",
+      description: "Bir dil skill'inde konuşma pratiği session'ı yap.",
+      type: "SKILL",
+      skillName: "İngilizce",
+      instructions: "15 dakikalık bir konuşma pratiği session'ı planla ve tamamla.",
+      rewardPoints: 10,
+    },
+  ];
+
+  for (const m of MISSIONS) {
+    const skillId = m.skillName ? skillsByName.get(m.skillName)?.id : undefined;
+    const existing = await prisma.mission.findFirst({ where: { title: m.title } });
+    if (!existing) {
+      await prisma.mission.create({
+        data: {
+          title: m.title,
+          description: m.description,
+          type: m.type,
+          skillId: skillId ?? null,
+          instructions: m.instructions,
+          rewardPoints: m.rewardPoints,
+        },
+      });
+    }
+  }
 }
 
 // ---------- Demo kullanıcılar (student2 / feature/matching-education) ----------
