@@ -1,0 +1,486 @@
+// SkillSwap — Prisma schema (MVP scope)
+// Kaynak: SkillSwap Master Ürün Brifi V2, bölüm 20 "Veri Modeli" + MVP kapsamı (bölüm 19).
+//
+// Notlar:
+// - User.id, Supabase Auth'taki auth.users.id (uuid) ile birebir aynıdır ve kayıt
+//   sırasında uygulama tarafından atanır (bu yüzden @default yok).
+// - V1/V2 kapsamındaki tablolar (Community, Skill DNA/Passport, Missions, Skill Chain,
+//   Skill Stories) bilinçli olarak bu şemada YOK — MVP'de gerçek özellik olmayan
+//   yapı için şema kurmuyoruz. Bkz. docs/PLANNING.md.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------- Enums ----------
+
+enum Network {
+  TURKIYE
+  GLOBAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum GenderPreference {
+  MALE
+  FEMALE
+  EVERYONE
+}
+
+enum SkillMode {
+  TEACH
+  LEARN
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum TeachingStyle {
+  THEORY
+  PRACTICE
+  PROJECT
+  CONVERSATION
+  COWORKING
+}
+
+enum LearningPurpose {
+  SCHOOL
+  CAREER
+  HOBBY
+  DAILY_LIFE
+}
+
+enum SocialEnergy {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MeetingPreference {
+  ONLINE
+  IN_PERSON
+  BOTH
+}
+
+enum PlanningStyle {
+  PLANNED
+  SPONTANEOUS
+}
+
+enum Pace {
+  CALM
+  ACTIVE
+}
+
+enum GroupSizePreference {
+  SMALL_GROUP
+  LARGE_GROUP
+  EITHER
+}
+
+enum MatchModePreference {
+  SIMILAR
+  COMPLEMENTARY
+  OPPOSITE
+  NO_PREFERENCE
+}
+
+enum YearStatus {
+  PREP
+  YEAR_1
+  YEAR_2
+  YEAR_3
+  YEAR_4
+  GRADUATE
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum GuideType {
+  STUDENT
+  ALUMNI
+}
+
+enum SessionStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum MatchStatus {
+  SUGGESTED
+  LIKED
+  PASSED
+  MUTUAL
+}
+
+enum MessageType {
+  TEXT
+  VOICE
+}
+
+enum ContributionSource {
+  GUIDE_SESSION
+  SKILL_SESSION
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+// ---------- Kullanıcı & Lifestyle Interview (bölüm 3) ----------
+
+model User {
+  id               String            @id @db.Uuid
+  email            String            @unique
+  name             String
+  avatarUrl        String?
+  ageRange         String? // ör. "18-24" — basit bucket, MVP için yeterli
+  gender           Gender?
+  genderPreference GenderPreference?
+  city             String?
+  country          String?
+  network          Network           @default(TURKIYE)
+  languages        String[]          @default([])
+  phoneHidden      String? // varsayılan gizli iletişim bilgisi (bölüm 16)
+  isMinor          Boolean           @default(false) // reşit olmayan kullanıcılar için sıkı kurallar
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  lifestyleProfile   LifestyleProfile?
+  educations         UserEducation[]
+  guideProfile       GuideProfile?
+  userSkills         UserSkill[]
+  userCourseTopics   UserCourseTopic[]
+  contributionLedger ContributionLedger[]
+
+  guideSessionsAsGuide       GuideSession[] @relation("GuideSessionsAsGuide")
+  guideSessionsAsParticipant GuideSession[] @relation("GuideSessionsAsParticipant")
+
+  skillSessionsAsTeacher SkillSession[] @relation("SkillSessionsAsTeacher")
+  skillSessionsAsLearner SkillSession[] @relation("SkillSessionsAsLearner")
+
+  matchesAsA Match[] @relation("MatchesAsA")
+  matchesAsB Match[] @relation("MatchesAsB")
+
+  conversations ConversationParticipant[]
+  messages      Message[]
+
+  blocksMade     Block[] @relation("BlocksMade")
+  blocksReceived Block[] @relation("BlocksReceived")
+
+  reportsMade     Report[] @relation("ReportsMade")
+  reportsReceived Report[] @relation("ReportsReceived")
+
+  @@index([city, country])
+  @@index([network])
+}
+
+model LifestyleProfile {
+  id                    String               @id @default(uuid())
+  userId                String               @unique @db.Uuid
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socialEnergy          SocialEnergy?
+  meetingPreference     MeetingPreference?
+  planningStyle         PlanningStyle?
+  pace                  Pace?
+  groupSizePreference   GroupSizePreference?
+  matchModePreference   MatchModePreference?
+  budgetLevel           Int? // 1 (düşük) - 3 (yüksek)
+  transportPreference   String?
+  venuePreference       String?
+  isNewInCity           Boolean              @default(false)
+  firstMeetupBoundaries String? // ilk buluşmada istemedikleri / güvenlik sınırları
+  careerGoals           String?
+  academicStrengths     String[]             @default([])
+  hobbies               String[]             @default([])
+  interests             String[]             @default([])
+  availability          Json? // haftalık müsaitlik, ör. { "mon": ["evening"], ... }
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+}
+
+// ---------- Skill Sistemi (bölüm 4) ----------
+
+model Skill {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  category      String
+  userSkills    UserSkill[]
+  skillSessions SkillSession[]
+}
+
+model UserSkill {
+  id              String           @id @default(uuid())
+  userId          String           @db.Uuid
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId         String
+  skill           Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  mode            SkillMode
+  level           SkillLevel
+  teachingStyle   TeachingStyle?
+  learningPurpose LearningPurpose?
+  experienceYears Int?
+  createdAt       DateTime         @default(now())
+
+  @@unique([userId, skillId, mode])
+}
+
+// ---------- Dersler (bölüm 4, "Okul Dersleri") ----------
+
+model Course {
+  id       String        @id @default(uuid())
+  name     String        @unique // ör. "Matematik"
+  category String?
+  topics   CourseTopic[]
+}
+
+model CourseTopic {
+  id            String            @id @default(uuid())
+  courseId      String
+  course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name          String // ör. "Türev"
+  level         String? // ör. "Lise", "Üniversite"
+  userTopics    UserCourseTopic[]
+  skillSessions SkillSession[]
+
+  @@unique([courseId, name, level])
+}
+
+model UserCourseTopic {
+  id        String      @id @default(uuid())
+  userId    String      @db.Uuid
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicId   String
+  topic     CourseTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  mode      SkillMode
+  level     SkillLevel
+  createdAt DateTime    @default(now())
+
+  @@unique([userId, topicId, mode])
+}
+
+// ---------- Okul & Bölüm Ağı (bölüm 5) ----------
+
+model School {
+  id          String          @id @default(uuid())
+  name        String
+  country     String
+  city        String?
+  type        String? // "university" | "high_school"
+  verified    Boolean         @default(false)
+  departments Department[]
+  educations  UserEducation[]
+
+  @@unique([name, city, country])
+}
+
+model Department {
+  id         String          @id @default(uuid())
+  schoolId   String
+  school     School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name       String
+  faculty    String?
+  category   String?
+  educations UserEducation[]
+
+  @@unique([schoolId, name])
+}
+
+model UserEducation {
+  id                 String             @id @default(uuid())
+  userId             String             @db.Uuid
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId           String
+  school             School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  departmentId       String?
+  department         Department?        @relation(fields: [departmentId], references: [id])
+  yearStatus         YearStatus?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@unique([userId, schoolId, departmentId])
+}
+
+// Bölüm rehberliği (Guide) — bölüm 5 "Bölüm rehberliği" + "Guide Profile"
+model GuideProfile {
+  id               String    @id @default(uuid())
+  userId           String    @unique @db.Uuid
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics           String[]  @default([]) // ör. "Bölümü Tanıma", "Hazırlık Süreci"
+  sessionDurations Int[]     @default([30, 60]) // dakika seçenekleri
+  guideType        GuideType
+  isActive         Boolean   @default(true)
+  availability     Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model GuideSession {
+  id              String        @id @default(uuid())
+  guideId         String        @db.Uuid
+  guide           User          @relation("GuideSessionsAsGuide", fields: [guideId], references: [id], onDelete: Cascade)
+  participantId   String        @db.Uuid
+  participant     User          @relation("GuideSessionsAsParticipant", fields: [participantId], references: [id], onDelete: Cascade)
+  topic           String
+  durationMinutes Int
+  scheduledAt     DateTime?
+  status          SessionStatus @default(REQUESTED)
+  rating          Int? // 1-5
+  feedback        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  contributionEntries ContributionLedger[]
+
+  @@index([guideId])
+  @@index([participantId])
+}
+
+// ---------- Genel Skill / Ders Session'ları (bölüm 4, 12) ----------
+
+model SkillSession {
+  id              String        @id @default(uuid())
+  teacherId       String        @db.Uuid
+  teacher         User          @relation("SkillSessionsAsTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  learnerId       String        @db.Uuid
+  learner         User          @relation("SkillSessionsAsLearner", fields: [learnerId], references: [id], onDelete: Cascade)
+  skillId         String?
+  skill           Skill?        @relation(fields: [skillId], references: [id])
+  courseTopicId   String?
+  courseTopic     CourseTopic?  @relation(fields: [courseTopicId], references: [id])
+  scheduledAt     DateTime?
+  durationMinutes Int?
+  status          SessionStatus @default(REQUESTED)
+  rating          Int?
+  feedback        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  contributionEntries ContributionLedger[]
+
+  @@index([teacherId])
+  @@index([learnerId])
+}
+
+// ---------- AI Match Engine (bölüm 6) ----------
+
+model Match {
+  id        String               @id @default(uuid())
+  userAId   String               @db.Uuid
+  userA     User                 @relation("MatchesAsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId   String               @db.Uuid
+  userB     User                 @relation("MatchesAsB", fields: [userBId], references: [id], onDelete: Cascade)
+  score     Float
+  reasons   Json // "Why matched" — faktör kırılımı, ör. [{ "factor": "skill_reciprocity", "weight": 0.3 }]
+  mode      MatchModePreference?
+  status    MatchStatus          @default(SUGGESTED)
+  createdAt DateTime             @default(now())
+
+  @@unique([userAId, userBId])
+  @@index([userBId])
+}
+
+// ---------- Chat (bölüm 8) ----------
+
+model Conversation {
+  id           String                    @id @default(uuid())
+  createdAt    DateTime                  @default(now())
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String       @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String       @db.Uuid
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  type           MessageType  @default(TEXT)
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ---------- Katkı Ekonomisi (bölüm 5 "Rehberlik Session'ları ile puan kazanma", bölüm 12) ----------
+
+model ContributionLedger {
+  id             String             @id @default(uuid())
+  userId         String             @db.Uuid
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points         Int
+  source         ContributionSource
+  guideSessionId String?
+  guideSession   GuideSession?      @relation(fields: [guideSessionId], references: [id])
+  skillSessionId String?
+  skillSession   SkillSession?      @relation(fields: [skillSessionId], references: [id])
+  createdAt      DateTime           @default(now())
+
+  @@index([userId])
+}
+
+// ---------- Güvenlik ve Gizlilik (bölüm 16) ----------
+
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String   @db.Uuid
+  blocker   User     @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String   @db.Uuid
+  blocked   User     @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+model Report {
+  id         String       @id @default(uuid())
+  reporterId String       @db.Uuid
+  reporter   User         @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedId String       @db.Uuid
+  reported   User         @relation("ReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
+  reason     String
+  details    String?
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+
+  @@index([reportedId])
+}
