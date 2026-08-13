@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 export type LoginState = {
   error: string | null;
@@ -19,7 +20,7 @@ export async function login(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -28,5 +29,10 @@ export async function login(
     return { error: error.message };
   }
 
-  redirect("/onboarding");
+  const userId = data.user?.id;
+  const education = userId
+    ? await prisma.userEducation.findFirst({ where: { userId } })
+    : null;
+
+  redirect(education ? "/profil" : "/onboarding");
 }
