@@ -78,6 +78,25 @@ export const MISSION_STATUS_LABELS: Record<string, string> = {
   COMPLETED: "Tamamlandı",
 };
 
+export const MEETUP_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Taslak",
+  PROPOSED: "Önerildi",
+  CONFIRMED: "Onaylandı",
+  CANCELLED: "İptal edildi",
+};
+
+export const MEETUP_TIER_LABELS: Record<string, string> = {
+  BUDGET: "Ekonomik",
+  BALANCED: "Dengeli",
+  PREMIUM: "Premium",
+};
+
+export const MEETUP_PARTICIPANT_STATUS_LABELS: Record<string, string> = {
+  INVITED: "Davet edildi",
+  ACCEPTED: "Katılıyor",
+  DECLINED: "Katılmıyor",
+};
+
 export const GUIDE_TOPIC_SUGGESTIONS = [
   "Bölümümü tanıtabilirim",
   "Hazırlık nasıl?",
