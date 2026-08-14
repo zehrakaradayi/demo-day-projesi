@@ -82,14 +82,27 @@ Bu özelliklere gelindiğinde ilgili modeller şemaya eklenmeli.
    ```bash
    npm install
    ```
-4. **Şemayı veritabanına uygula ve client'ı üret:**
+4. **Şemayı veritabanına uygula:** iki yoldan biri yeter, ikisini birden yapmaya gerek yok.
+   - **CLI ile (önerilen, kolay yoldan):**
+     ```bash
+     npm run db:push       # ilk kurulum / hızlı iterasyon için
+     npm run db:generate
+     ```
+   - **Supabase SQL Editor ile:** [`supabase/sql/001_init_schema.sql`](supabase/sql/001_init_schema.sql)
+     dosyasının tamamını Supabase Dashboard → SQL Editor → New query'ye yapıştırıp çalıştır.
+     Tüm tabloları, enum'ları ve foreign key'leri (`auth.users` bağlantısı dahil) tek seferde
+     kurar — özellikle CLI'dan bağlanmakta sorun yaşarsan ya da tabloları dashboard'da elle
+     görmek istersen kullanışlı. Sonrasında yine `npm run db:generate` çalıştır (client'ı
+     üretmek için, veritabanına dokunmaz).
+
+   Ardından katalog verisini yükle:
    ```bash
-   npm run db:push       # ilk kurulum / hızlı iterasyon için
-   npm run db:generate
    npm run db:seed       # skills/courses/schools katalog verisini yükler
    ```
+
    Takım büyüdükçe ve şema stabilleştikçe `db:push` yerine `npm run db:migrate`
-   (adlandırılmış migration'lar) kullanmaya geçin.
+   (adlandırılmış migration'lar) kullanmaya geçin. `supabase/sql/001_init_schema.sql` elle
+   senkronize edilmez — şema değiştiğinde yeniden üretilmesi gerekir (bkz. dosyanın başındaki not).
 5. **Geliştirme sunucusunu başlat:**
    ```bash
    npm run dev

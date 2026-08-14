@@ -1,13 +1,14 @@
-// SkillSwap — Prisma schema (MVP + matching-education V1/V2 scope)
+// SkillSwap — Prisma schema (MVP + matching-education V1/V2 scope + Branch 3 "Social & Community")
 // Kaynak: SkillSwap Master Ürün Brifi V2, bölüm 20 "Veri Modeli" + MVP kapsamı (bölüm 19)
 // + Branch 2 Brifi (feature/matching-education): Skill DNA, Skill Passport, Skill Evolution,
-// Skill Chain, Skill Credits, Missions.
+// Skill Chain, Skill Credits, Missions + Branch 3 Brifi: Community, Skill Stories, Meetup.
 //
 // Notlar:
 // - User.id, Supabase Auth'taki auth.users.id (uuid) ile birebir aynıdır ve kayıt
 //   sırasında uygulama tarafından atanır (bu yüzden @default yok).
-// - Community ve Skill Stories (V1/V2, başka branch'lerin sorumluluğu) bilinçli olarak
-//   bu şemada YOK.
+// - Culture Swap için ayrı bir model YOK: User.country/languages/network + UserSkill
+//   üzerinden filtrelenmiş bir görünüm olarak uygulanıyor (gerçek ihtiyaç çıkarsa
+//   ileride model eklenir).
 
 generator client {
   provider = "prisma-client"
@@ -16,7 +17,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Prisma 7: bağlantı URL'leri artık burada değil, prisma.config.ts'de tanımlanır.
+  // Bu Supabase projesi başka bir uygulamayla paylaşılıyor (public şemasında
+  // ilişkisiz tablolar var) — SkillSwap tabloları izole bir şemada tutuluyor,
+  // böylece db push asla public şemaya dokunmaz.
+  schemas = ["skillswap"]
+  // Bağlantı URL'leri prisma.config.ts içinde tanımlı (Prisma 7).
 }
 
 // ---------- Enums ----------
@@ -24,6 +29,8 @@ datasource db {
 enum Network {
   TURKIYE
   GLOBAL
+
+  @@schema("skillswap")
 }
 
 enum Gender {
@@ -31,17 +38,23 @@ enum Gender {
   FEMALE
   OTHER
   PREFER_NOT_TO_SAY
+
+  @@schema("skillswap")
 }
 
 enum GenderPreference {
   MALE
   FEMALE
   EVERYONE
+
+  @@schema("skillswap")
 }
 
 enum SkillMode {
   TEACH
   LEARN
+
+  @@schema("skillswap")
 }
 
 enum SkillLevel {
@@ -49,6 +62,8 @@ enum SkillLevel {
   INTERMEDIATE
   ADVANCED
   EXPERT
+
+  @@schema("skillswap")
 }
 
 enum TeachingStyle {
@@ -57,6 +72,8 @@ enum TeachingStyle {
   PROJECT
   CONVERSATION
   COWORKING
+
+  @@schema("skillswap")
 }
 
 enum LearningPurpose {
@@ -64,34 +81,46 @@ enum LearningPurpose {
   CAREER
   HOBBY
   DAILY_LIFE
+
+  @@schema("skillswap")
 }
 
 enum SocialEnergy {
   LOW
   MEDIUM
   HIGH
+
+  @@schema("skillswap")
 }
 
 enum MeetingPreference {
   ONLINE
   IN_PERSON
   BOTH
+
+  @@schema("skillswap")
 }
 
 enum PlanningStyle {
   PLANNED
   SPONTANEOUS
+
+  @@schema("skillswap")
 }
 
 enum Pace {
   CALM
   ACTIVE
+
+  @@schema("skillswap")
 }
 
 enum GroupSizePreference {
   SMALL_GROUP
   LARGE_GROUP
   EITHER
+
+  @@schema("skillswap")
 }
 
 enum MatchModePreference {
@@ -99,6 +128,8 @@ enum MatchModePreference {
   COMPLEMENTARY
   OPPOSITE
   NO_PREFERENCE
+
+  @@schema("skillswap")
 }
 
 enum YearStatus {
@@ -108,6 +139,8 @@ enum YearStatus {
   YEAR_3
   YEAR_4
   GRADUATE
+
+  @@schema("skillswap")
 }
 
 enum VerificationStatus {
@@ -115,11 +148,15 @@ enum VerificationStatus {
   PENDING
   VERIFIED
   REJECTED
+
+  @@schema("skillswap")
 }
 
 enum GuideType {
   STUDENT
   ALUMNI
+
+  @@schema("skillswap")
 }
 
 enum SessionStatus {
@@ -127,6 +164,8 @@ enum SessionStatus {
   CONFIRMED
   COMPLETED
   CANCELLED
+
+  @@schema("skillswap")
 }
 
 enum MatchStatus {
@@ -134,17 +173,23 @@ enum MatchStatus {
   LIKED
   PASSED
   MUTUAL
+
+  @@schema("skillswap")
 }
 
 enum MessageType {
   TEXT
   VOICE
+
+  @@schema("skillswap")
 }
 
 enum ContributionSource {
   GUIDE_SESSION
   SKILL_SESSION
   OTHER
+
+  @@schema("skillswap")
 }
 
 enum ReportStatus {
@@ -152,16 +197,22 @@ enum ReportStatus {
   REVIEWED
   RESOLVED
   DISMISSED
+
+  @@schema("skillswap")
 }
 
 enum MissionType {
   SKILL
   GUIDE
+
+  @@schema("skillswap")
 }
 
 enum MissionStatus {
   ASSIGNED
   COMPLETED
+
+  @@schema("skillswap")
 }
 
 enum SkillCreditSource {
@@ -169,6 +220,8 @@ enum SkillCreditSource {
   GUIDE_SESSION
   CHAIN_EXCHANGE
   OTHER
+
+  @@schema("skillswap")
 }
 
 enum GamificationLevel {
@@ -177,6 +230,8 @@ enum GamificationLevel {
   SKILL_SHARER
   MENTOR
   SKILL_MASTER
+
+  @@schema("skillswap")
 }
 
 // ---------- Kullanıcı & Lifestyle Interview (bölüm 3) ----------
@@ -229,8 +284,15 @@ model User {
   skillCredits     SkillCreditLedger[] @relation("SkillCreditsOwner")
   skillCreditsSent SkillCreditLedger[] @relation("SkillCreditsCounterparty")
 
+  communitiesCreated   Community[]           @relation("CommunitiesCreated")
+  communityMemberships CommunityMembership[]
+  skillStories         SkillStory[]
+  meetupsCreated       Meetup[]              @relation("MeetupsCreated")
+  meetupParticipations MeetupParticipant[]
+
   @@index([city, country])
   @@index([network])
+  @@schema("skillswap")
 }
 
 model LifestyleProfile {
@@ -255,6 +317,8 @@ model LifestyleProfile {
   availability          Json? // haftalık müsaitlik, ör. { "mon": ["evening"], ... }
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
+
+  @@schema("skillswap")
 }
 
 // ---------- Skill Sistemi (bölüm 4) ----------
@@ -268,6 +332,9 @@ model Skill {
 
   skillLevelEvents SkillLevelEvent[]
   missions         Mission[]
+  skillStories     SkillStory[]
+
+  @@schema("skillswap")
 }
 
 model UserSkill {
@@ -284,6 +351,7 @@ model UserSkill {
   createdAt       DateTime         @default(now())
 
   @@unique([userId, skillId, mode])
+  @@schema("skillswap")
 }
 
 // ---------- Dersler (bölüm 4, "Okul Dersleri") ----------
@@ -293,6 +361,8 @@ model Course {
   name     String        @unique // ör. "Matematik"
   category String?
   topics   CourseTopic[]
+
+  @@schema("skillswap")
 }
 
 model CourseTopic {
@@ -305,6 +375,7 @@ model CourseTopic {
   skillSessions SkillSession[]
 
   @@unique([courseId, name, level])
+  @@schema("skillswap")
 }
 
 model UserCourseTopic {
@@ -318,33 +389,40 @@ model UserCourseTopic {
   createdAt DateTime    @default(now())
 
   @@unique([userId, topicId, mode])
+  @@schema("skillswap")
 }
 
 // ---------- Okul & Bölüm Ağı (bölüm 5) ----------
 
 model School {
-  id          String          @id @default(uuid())
-  name        String
-  country     String
-  city        String?
-  type        String? // "university" | "high_school"
-  verified    Boolean         @default(false)
-  departments Department[]
-  educations  UserEducation[]
+  id           String          @id @default(uuid())
+  name         String
+  country      String
+  city         String?
+  type         String? // "university" | "high_school"
+  verified     Boolean         @default(false)
+  departments  Department[]
+  educations   UserEducation[]
+  communities  Community[]
+  skillStories SkillStory[]
 
   @@unique([name, city, country])
+  @@schema("skillswap")
 }
 
 model Department {
-  id         String          @id @default(uuid())
-  schoolId   String
-  school     School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  name       String
-  faculty    String?
-  category   String?
-  educations UserEducation[]
+  id           String          @id @default(uuid())
+  schoolId     String
+  school       School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name         String
+  faculty      String?
+  category     String?
+  educations   UserEducation[]
+  communities  Community[]
+  skillStories SkillStory[]
 
   @@unique([schoolId, name])
+  @@schema("skillswap")
 }
 
 model UserEducation {
@@ -361,6 +439,7 @@ model UserEducation {
   updatedAt          DateTime           @updatedAt
 
   @@unique([userId, schoolId, departmentId])
+  @@schema("skillswap")
 }
 
 // Bölüm rehberliği (Guide) — bölüm 5 "Bölüm rehberliği" + "Guide Profile"
@@ -375,6 +454,8 @@ model GuideProfile {
   availability     Json?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
+  @@schema("skillswap")
 }
 
 model GuideSession {
@@ -396,6 +477,7 @@ model GuideSession {
 
   @@index([guideId])
   @@index([participantId])
+  @@schema("skillswap")
 }
 
 // ---------- Genel Skill / Ders Session'ları (bölüm 4, 12) ----------
@@ -422,6 +504,7 @@ model SkillSession {
 
   @@index([teacherId])
   @@index([learnerId])
+  @@schema("skillswap")
 }
 
 // ---------- AI Match Engine (bölüm 6) ----------
@@ -440,15 +523,22 @@ model Match {
 
   @@unique([userAId, userBId])
   @@index([userBId])
+  @@schema("skillswap")
 }
 
 // ---------- Chat (bölüm 8) ----------
 
 model Conversation {
-  id           String                    @id @default(uuid())
-  createdAt    DateTime                  @default(now())
-  participants ConversationParticipant[]
-  messages     Message[]
+  id             String                    @id @default(uuid())
+  createdAt      DateTime                  @default(now())
+  communityId    String?                   @unique // sadece Community grup sohbetleri için set edilir
+  community      Community?                @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  participants   ConversationParticipant[]
+  messages       Message[]
+  meetups        Meetup[]
+  askedQuestions AskedQuestion[]
+
+  @@schema("skillswap")
 }
 
 model ConversationParticipant {
@@ -458,8 +548,10 @@ model ConversationParticipant {
   userId         String       @db.Uuid
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime? // okunmamış mesaj sayısı / read-receipt temeli
 
   @@unique([conversationId, userId])
+  @@schema("skillswap")
 }
 
 model Message {
@@ -472,7 +564,10 @@ model Message {
   content        String
   createdAt      DateTime     @default(now())
 
+  reports Report[]
+
   @@index([conversationId, createdAt])
+  @@schema("skillswap")
 }
 
 // ---------- Katkı Ekonomisi (bölüm 5 "Rehberlik Session'ları ile puan kazanma", bölüm 12) ----------
@@ -490,6 +585,7 @@ model ContributionLedger {
   createdAt      DateTime           @default(now())
 
   @@index([userId])
+  @@schema("skillswap")
 }
 
 // ---------- Güvenlik ve Gizlilik (bölüm 16) ----------
@@ -503,20 +599,241 @@ model Block {
   createdAt DateTime @default(now())
 
   @@unique([blockerId, blockedId])
+  @@schema("skillswap")
 }
 
 model Report {
-  id         String       @id @default(uuid())
-  reporterId String       @db.Uuid
-  reporter   User         @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
-  reportedId String       @db.Uuid
-  reported   User         @relation("ReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
-  reason     String
-  details    String?
-  status     ReportStatus @default(OPEN)
-  createdAt  DateTime     @default(now())
+  id          String              @id @default(uuid())
+  contentType ReportedContentType @default(USER)
+
+  reporterId String @db.Uuid
+  reporter   User   @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // contentType=USER olduğunda dolu; diğer türlerde biliniyorsa yine set edilebilir (ör. mesaj göndereni)
+  reportedId String? @db.Uuid
+  reported   User?   @relation("ReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  reportedMessageId String?
+  reportedMessage   Message? @relation(fields: [reportedMessageId], references: [id])
+
+  reportedMeetupId String?
+  reportedMeetup   Meetup? @relation(fields: [reportedMeetupId], references: [id])
+
+  reportedCommunityId String?
+  reportedCommunity   Community? @relation(fields: [reportedCommunityId], references: [id])
+
+  reason    String
+  details   String?
+  status    ReportStatus @default(OPEN)
+  createdAt DateTime     @default(now())
 
   @@index([reportedId])
+  @@index([contentType])
+  @@schema("skillswap")
+}
+
+// ---------- Social & Community — Branch 3 kapsamı ----------
+
+enum CommunityRole {
+  OWNER
+  MODERATOR
+  MEMBER
+
+  @@schema("skillswap")
+}
+
+enum MeetupStatus {
+  DRAFT // AI alternatifleri üretildi, henüz seçilmedi/paylaşılmadı
+  PROPOSED // bir sohbete paylaşıldı, onay bekliyor
+  CONFIRMED
+  CANCELLED
+
+  @@schema("skillswap")
+}
+
+enum MeetupTier {
+  BUDGET
+  BALANCED
+  PREMIUM
+
+  @@schema("skillswap")
+}
+
+enum MeetupParticipantStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+
+  @@schema("skillswap")
+}
+
+enum AskedQuestionSource {
+  STARTER // Conversation Starter önerisi
+  SPIN // Spin the Question
+  RESCUE // Conversation Rescue
+
+  @@schema("skillswap")
+}
+
+enum ReportedContentType {
+  USER
+  MESSAGE
+  MEETUP
+  COMMUNITY
+  SKILL_STORY
+
+  @@schema("skillswap")
+}
+
+// 3-8 kişilik küçük gruplar (bölüm 10) — okul/bölüm community'leri School/Department'ı reuse eder (bölüm 11)
+model Community {
+  id           String      @id @default(uuid())
+  name         String
+  description  String?
+  category     String?
+  city         String?
+  country      String?
+  isPublic     Boolean     @default(true)
+  rules        String?
+  schoolId     String?
+  school       School?     @relation(fields: [schoolId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  createdById  String      @db.Uuid
+  createdBy    User        @relation("CommunitiesCreated", fields: [createdById], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  members      CommunityMembership[]
+  conversation Conversation?
+  reports      Report[]
+
+  @@index([schoolId, departmentId])
+  @@index([city, country])
+  @@schema("skillswap")
+}
+
+model CommunityMembership {
+  id          String        @id @default(uuid())
+  communityId String
+  community   Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId      String        @db.Uuid
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        CommunityRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  @@unique([communityId, userId])
+  @@index([userId])
+  @@schema("skillswap")
+}
+
+// 15-30 saniyelik "Bunu sana öğretebilirim" videoları (bölüm 14)
+model SkillStory {
+  id              String      @id @default(uuid())
+  userId          String      @db.Uuid
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoUrl        String // Supabase Storage
+  caption         String?
+  durationSeconds Int
+  skillId         String?
+  skill           Skill?      @relation(fields: [skillId], references: [id])
+  schoolId        String?
+  school          School?     @relation(fields: [schoolId], references: [id])
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  viewCount       Int         @default(0)
+  createdAt       DateTime    @default(now())
+
+  @@index([skillId])
+  @@index([schoolId, departmentId])
+  @@schema("skillswap")
+}
+
+// AI Meetup Planner (bölüm 9)
+model Meetup {
+  id                       String        @id @default(uuid())
+  createdById              String        @db.Uuid
+  createdBy                User          @relation("MeetupsCreated", fields: [createdById], references: [id], onDelete: Cascade)
+  conversationId           String?
+  conversation             Conversation? @relation(fields: [conversationId], references: [id])
+  city                     String
+  peopleCount              Int
+  budgetLevel              Int? // 1 (düşük) - 3 (yüksek), LifestyleProfile.budgetLevel ile aynı ölçek
+  date                     DateTime?
+  timeRangeStart           String? // "19:00"
+  timeRangeEnd             String? // "23:30"
+  vibe                     String?
+  transportPreference      String?
+  foodOrActivityPreference String?
+  status                   MeetupStatus  @default(DRAFT)
+  chosenAlternativeId      String?       @unique
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  alternatives      MeetupAlternative[] @relation("MeetupAlternatives")
+  chosenAlternative MeetupAlternative?  @relation("ChosenAlternative", fields: [chosenAlternativeId], references: [id])
+  participants      MeetupParticipant[]
+  reports           Report[]
+
+  @@index([createdById])
+  @@schema("skillswap")
+}
+
+model MeetupAlternative {
+  id                      String     @id @default(uuid())
+  meetupId                String
+  meetup                  Meetup     @relation("MeetupAlternatives", fields: [meetupId], references: [id], onDelete: Cascade)
+  tier                    MeetupTier
+  totalBudgetEstimate     Float?
+  perPersonBudgetEstimate Float?
+  aiRawResponse           Json? // ham AI yanıtı, audit/debug için
+  createdAt               DateTime   @default(now())
+
+  stops     MeetupStop[]
+  chosenFor Meetup?      @relation("ChosenAlternative")
+
+  @@index([meetupId])
+  @@schema("skillswap")
+}
+
+model MeetupStop {
+  id                           String            @id @default(uuid())
+  alternativeId                String
+  alternative                  MeetupAlternative @relation(fields: [alternativeId], references: [id], onDelete: Cascade)
+  order                        Int
+  startTime                    String // "19:30"
+  locationName                 String // "Karaköy"
+  activityType                 String // "workshop" | "dinner" | "rooftop" | ...
+  transportMinutesFromPrevious Int?
+  notes                        String?
+
+  @@index([alternativeId, order])
+  @@schema("skillswap")
+}
+
+model MeetupParticipant {
+  id       String                  @id @default(uuid())
+  meetupId String
+  meetup   Meetup                  @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  userId   String                  @db.Uuid
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status   MeetupParticipantStatus @default(INVITED)
+
+  @@unique([meetupId, userId])
+  @@schema("skillswap")
+}
+
+// Spin the Question / Conversation Rescue — "aynı soruyu tekrar sorma" durumu
+model AskedQuestion {
+  id             String              @id @default(uuid())
+  conversationId String
+  conversation   Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  question       String
+  source         AskedQuestionSource
+  createdAt      DateTime            @default(now())
+
+  @@index([conversationId, createdAt])
+  @@schema("skillswap")
 }
 
 // ---------- Skill DNA + Skill Evolution (bölüm 11, Branch 2 brifi bölüm 6) ----------
@@ -534,6 +851,7 @@ model SkillLevelEvent {
   recordedAt DateTime   @default(now())
 
   @@index([userId, skillId])
+  @@schema("skillswap")
 }
 
 // ---------- Missions + Gamification (bölüm 13, Branch 2 brifi bölüm 13) ----------
@@ -550,6 +868,8 @@ model Mission {
   rewardPoints   Int           @default(10)
   isActive       Boolean       @default(true)
   userMissions   UserMission[]
+
+  @@schema("skillswap")
 }
 
 model UserMission {
@@ -564,6 +884,7 @@ model UserMission {
   createdAt   DateTime      @default(now())
 
   @@unique([userId, missionId])
+  @@schema("skillswap")
 }
 
 model Achievement {
@@ -572,6 +893,8 @@ model Achievement {
   title            String
   description      String
   userAchievements UserAchievement[]
+
+  @@schema("skillswap")
 }
 
 model UserAchievement {
@@ -583,6 +906,7 @@ model UserAchievement {
   earnedAt      DateTime    @default(now())
 
   @@unique([userId, achievementId])
+  @@schema("skillswap")
 }
 
 // ---------- Skill Credits (bölüm 12, Branch 2 brifi bölüm 12) ----------
@@ -601,4 +925,5 @@ model SkillCreditLedger {
   createdAt         DateTime          @default(now())
 
   @@index([userId])
+  @@schema("skillswap")
 }
