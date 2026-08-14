@@ -183,7 +183,10 @@ export default async function MeetupDetailPage({
           </div>
         </Section>
       ) : (
-        <EmptyState>AI planı üretilemedi. GEMINI_API_KEY tanımlı mı kontrol edip tekrar dene.</EmptyState>
+        <EmptyState>
+          AI planı üretilemedi — model şu an yoğun olabilir veya ücretsiz katmanın günlük
+          kotası dolmuş olabilir. Birkaç dakika sonra &quot;Tekrar dene&quot;yi bir daha dene.
+        </EmptyState>
       )}
 
       {isCreator && meetup.status !== "CANCELLED" ? (
