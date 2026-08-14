@@ -19,7 +19,7 @@ export async function Nav() {
   } = await supabase.auth.getUser();
 
   return (
-    <header className="border-b border-neutral-300/50 dark:border-neutral-800">
+    <header className="border-b border-neutral-200">
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-3">
         <Link href="/" className="text-sm font-semibold tracking-tight text-violet-600">
           SkillSwap

@@ -12,13 +12,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/*
+ * Uygulama kasıtlı olarak yalnızca açık tema kullanıyor: hiçbir bileşen
+ * `dark:` varyantı yazmıyor, bu yüzden `prefers-color-scheme: dark`'a göre
+ * arka planı koyulaştırmak metni (rengi body'den miras alan bg-white
+ * kartlar, dropdown'lar, modal'lar) okunmaz hale getiriyordu.
+ */
 body {
   background: var(--background);
   color: var(--foreground);
