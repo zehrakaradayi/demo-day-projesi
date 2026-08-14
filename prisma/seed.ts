@@ -1,18 +1,4 @@
-import { randomUUID } from "crypto";
-import {
-  PrismaClient,
-  Gender,
-  GenderPreference,
-  GroupSizePreference,
-  MatchModePreference,
-  Network,
-  Pace,
-  PlanningStyle,
-  SkillLevel,
-  SkillMode,
-  SocialEnergy,
-  YearStatus,
-} from "../src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type {
   School,
