@@ -14,6 +14,12 @@ import {
   YearStatus,
 } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import type {
+  School,
+  Department,
+  Skill,
+  CourseTopic,
+} from "../src/generated/prisma/client";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -129,298 +135,19 @@ const SCHOOLS: {
   },
 ];
 
-type SeedEducation = { school: string; department: string; yearStatus: YearStatus };
-type SeedSkill = { skill: string; mode: SkillMode; level: SkillLevel };
-type SeedLifestyle = {
-  socialEnergy?: SocialEnergy;
-  planningStyle?: PlanningStyle;
-  pace?: Pace;
-  groupSizePreference?: GroupSizePreference;
-  matchModePreference?: MatchModePreference;
-  isNewInCity?: boolean;
-  hobbies?: string[];
-  interests?: string[];
-};
-
-type SeedUser = {
-  // Sabit id sadece ilk oluşturmada kullanılır (email zaten varsa upsert
-  // mevcut satırı günceller, id'ye dokunmaz). Verilmezse rastgele üretilir.
-  id?: string;
-  name: string;
-  email: string;
-  city: string;
-  country: string;
-  ageRange?: string;
-  gender?: Gender;
-  genderPreference?: GenderPreference;
-  network?: Network;
-  languages?: string[];
-  educations: SeedEducation[];
-  skills: SeedSkill[];
-  lifestyle?: SeedLifestyle;
-};
-
-// İlk 7 kullanıcı (Ayşe...Selin) paylaşılan dev veritabanında halihazırda
-// var olan kayıtların birebir aynısı — burada sabitlenmesinin amacı, fresh
-// bir DB'de de aynı demo verisinin üretilebilmesini sağlamak (reproducibility).
-const USERS: SeedUser[] = [
-  {
-    id: "11111111-1111-4111-8111-111111111111",
-    name: "Ayşe Yılmaz",
-    email: "demo.ayse@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    gender: Gender.FEMALE,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.TURKIYE,
-    languages: ["Türkçe", "İngilizce"],
-    educations: [
-      { school: "İstanbul Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.YEAR_3 },
-    ],
-    skills: [
-      { skill: "Python", mode: SkillMode.TEACH, level: SkillLevel.ADVANCED },
-      { skill: "Figma", mode: SkillMode.TEACH, level: SkillLevel.INTERMEDIATE },
-      { skill: "Machine Learning", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.MEDIUM,
-      planningStyle: PlanningStyle.PLANNED,
-      pace: Pace.CALM,
-      groupSizePreference: GroupSizePreference.SMALL_GROUP,
-      matchModePreference: MatchModePreference.SIMILAR,
-      hobbies: ["Gitar"],
-      interests: ["Kahve", "Kitap"],
-    },
-  },
-  {
-    id: "22222222-2222-4222-8222-222222222222",
-    name: "Mert Kaya",
-    email: "demo.mert@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    gender: Gender.MALE,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.TURKIYE,
-    languages: ["Türkçe", "İngilizce", "Almanca"],
-    educations: [
-      { school: "İstanbul Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.GRADUATE },
-    ],
-    skills: [
-      { skill: "Machine Learning", mode: SkillMode.TEACH, level: SkillLevel.EXPERT },
-      { skill: "JavaScript", mode: SkillMode.TEACH, level: SkillLevel.ADVANCED },
-      { skill: "Almanca", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.MEDIUM,
-      planningStyle: PlanningStyle.PLANNED,
-      pace: Pace.ACTIVE,
-      groupSizePreference: GroupSizePreference.EITHER,
-      matchModePreference: MatchModePreference.COMPLEMENTARY,
-      interests: ["Yapay zeka", "Girişimcilik"],
-    },
-  },
-  {
-    id: "33333333-3333-4333-8333-333333333333",
-    name: "Zeynep Demir",
-    email: "demo.zeynep@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    gender: Gender.FEMALE,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.TURKIYE,
-    languages: ["Türkçe", "İngilizce"],
-    educations: [
-      { school: "Boğaziçi Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.YEAR_2 },
-      { school: "İstanbul Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.YEAR_2 },
-    ],
-    skills: [
-      { skill: "Fotoğrafçılık", mode: SkillMode.TEACH, level: SkillLevel.ADVANCED },
-      { skill: "Python", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Excel", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Python", mode: SkillMode.TEACH, level: SkillLevel.INTERMEDIATE },
-      { skill: "Machine Learning", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.HIGH,
-      planningStyle: PlanningStyle.SPONTANEOUS,
-      pace: Pace.ACTIVE,
-      groupSizePreference: GroupSizePreference.LARGE_GROUP,
-      matchModePreference: MatchModePreference.COMPLEMENTARY,
-      isNewInCity: true,
-      interests: ["Sinema", "Seyahat"],
-    },
-  },
-  {
-    id: "44444444-4444-4444-8444-444444444444",
-    name: "Can Öztürk",
-    email: "demo.can@skillswap.local",
-    city: "Ankara",
-    country: "Türkiye",
-    gender: Gender.MALE,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.TURKIYE,
-    languages: ["Türkçe"],
-    educations: [
-      { school: "Orta Doğu Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.YEAR_1 },
-      { school: "İstanbul Teknik Üniversitesi", department: "Elektrik-Elektronik Mühendisliği", yearStatus: YearStatus.YEAR_3 },
-    ],
-    skills: [
-      { skill: "Excel", mode: SkillMode.TEACH, level: SkillLevel.INTERMEDIATE },
-      { skill: "JavaScript", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Python", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Gitar", mode: SkillMode.TEACH, level: SkillLevel.ADVANCED },
-      { skill: "İngilizce", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.LOW,
-      planningStyle: PlanningStyle.PLANNED,
-      pace: Pace.CALM,
-      groupSizePreference: GroupSizePreference.EITHER,
-      matchModePreference: MatchModePreference.NO_PREFERENCE,
-      interests: ["Satranç"],
-    },
-  },
-  {
-    id: "55555555-5555-4555-8555-555555555555",
-    name: "Elif Şahin",
-    email: "demo.elif@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    gender: Gender.FEMALE,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.TURKIYE,
-    languages: ["Türkçe", "İngilizce"],
-    educations: [
-      { school: "Boğaziçi Üniversitesi", department: "Psikoloji", yearStatus: YearStatus.YEAR_3 },
-      { school: "Boğaziçi Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.YEAR_1 },
-    ],
-    skills: [
-      { skill: "Public Speaking", mode: SkillMode.TEACH, level: SkillLevel.ADVANCED },
-      { skill: "İngilizce", mode: SkillMode.TEACH, level: SkillLevel.EXPERT },
-      { skill: "Gitar", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Fotoğrafçılık", mode: SkillMode.TEACH, level: SkillLevel.INTERMEDIATE },
-      { skill: "JavaScript", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.HIGH,
-      planningStyle: PlanningStyle.SPONTANEOUS,
-      pace: Pace.ACTIVE,
-      groupSizePreference: GroupSizePreference.SMALL_GROUP,
-      matchModePreference: MatchModePreference.SIMILAR,
-      interests: ["Psikoloji", "Kitap"],
-    },
-  },
-  {
-    id: "66666666-6666-4666-8666-666666666666",
-    name: "Deniz Aydın",
-    email: "demo.deniz@skillswap.local",
-    city: "Berlin",
-    country: "Almanya",
-    gender: Gender.OTHER,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.GLOBAL,
-    languages: ["Almanca", "İngilizce", "Türkçe"],
-    educations: [
-      { school: "Boğaziçi Üniversitesi", department: "Psikoloji", yearStatus: YearStatus.GRADUATE },
-    ],
-    skills: [
-      { skill: "Almanca", mode: SkillMode.TEACH, level: SkillLevel.EXPERT },
-      { skill: "Public Speaking", mode: SkillMode.TEACH, level: SkillLevel.EXPERT },
-      { skill: "Python", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Figma", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.MEDIUM,
-      planningStyle: PlanningStyle.PLANNED,
-      pace: Pace.CALM,
-      groupSizePreference: GroupSizePreference.EITHER,
-      matchModePreference: MatchModePreference.OPPOSITE,
-      interests: ["Kültür", "Yemek"],
-    },
-  },
-  {
-    id: "77777777-7777-4777-8777-777777777777",
-    name: "Selin Arslan",
-    email: "demo.selin@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    gender: Gender.FEMALE,
-    genderPreference: GenderPreference.EVERYONE,
-    network: Network.TURKIYE,
-    languages: ["Türkçe", "İngilizce"],
-    educations: [
-      { school: "İstanbul Teknik Üniversitesi", department: "Elektrik-Elektronik Mühendisliği", yearStatus: YearStatus.YEAR_2 },
-    ],
-    skills: [
-      { skill: "Gitar", mode: SkillMode.TEACH, level: SkillLevel.ADVANCED },
-      { skill: "Figma", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-      { skill: "Machine Learning", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-    lifestyle: {
-      socialEnergy: SocialEnergy.MEDIUM,
-      planningStyle: PlanningStyle.SPONTANEOUS,
-      pace: Pace.ACTIVE,
-      groupSizePreference: GroupSizePreference.SMALL_GROUP,
-      matchModePreference: MatchModePreference.COMPLEMENTARY,
-      isNewInCity: true,
-      interests: ["Müzik", "Gitar"],
-    },
-  },
-  // Yeni: daha önce hiç kullanıcısı olmayan okulları (Koç, İstanbul Ü,
-  // Marmara) da kapsayacak 3 ek örnek kullanıcı.
-  {
-    name: "Kerem Yıldız",
-    email: "demo.kerem@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    ageRange: "18-24",
-    educations: [
-      { school: "Koç Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.YEAR_3 },
-    ],
-    skills: [
-      { skill: "Machine Learning", mode: SkillMode.TEACH, level: SkillLevel.INTERMEDIATE },
-      { skill: "Gitar", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-  },
-  {
-    name: "İrem Çelik",
-    email: "demo.irem@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    ageRange: "18-24",
-    educations: [
-      { school: "İstanbul Üniversitesi", department: "Hukuk", yearStatus: YearStatus.YEAR_1 },
-    ],
-    skills: [
-      { skill: "Almanca", mode: SkillMode.TEACH, level: SkillLevel.INTERMEDIATE },
-      { skill: "Excel", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-  },
-  {
-    name: "Onur Kaya",
-    email: "demo.onur@skillswap.local",
-    city: "İstanbul",
-    country: "Türkiye",
-    ageRange: "18-24",
-    educations: [
-      { school: "Marmara Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: YearStatus.PREP },
-    ],
-    skills: [
-      { skill: "Fotoğrafçılık", mode: SkillMode.TEACH, level: SkillLevel.BEGINNER },
-      { skill: "JavaScript", mode: SkillMode.LEARN, level: SkillLevel.BEGINNER },
-    ],
-  },
-];
-
 async function main() {
-  const skillIdByName = new Map<string, string>();
+  const skillsByName = new Map<string, Awaited<ReturnType<typeof prisma.skill.upsert>>>();
+  const topicsByKey = new Map<string, Awaited<ReturnType<typeof prisma.courseTopic.upsert>>>();
+  const schoolsByName = new Map<string, Awaited<ReturnType<typeof prisma.school.upsert>>>();
+  const departmentsByKey = new Map<string, Awaited<ReturnType<typeof prisma.department.upsert>>>();
+
   for (const skill of SKILLS) {
-    const created = await prisma.skill.upsert({
+    const createdSkill = await prisma.skill.upsert({
       where: { name: skill.name },
       update: {},
       create: skill,
     });
-    skillIdByName.set(skill.name, created.id);
+    skillsByName.set(skill.name, createdSkill);
   }
 
   for (const course of COURSES) {
@@ -431,7 +158,7 @@ async function main() {
     });
 
     for (const topic of course.topics) {
-      await prisma.courseTopic.upsert({
+      const createdTopic = await prisma.courseTopic.upsert({
         where: {
           courseId_name_level: {
             courseId: createdCourse.id,
@@ -446,11 +173,9 @@ async function main() {
           level: topic.level,
         },
       });
+      topicsByKey.set(`${course.name}::${topic.name}`, createdTopic);
     }
   }
-
-  const schoolIdByName = new Map<string, string>();
-  const departmentIdByKey = new Map<string, string>();
 
   for (const school of SCHOOLS) {
     const createdSchool = await prisma.school.upsert({
@@ -469,7 +194,7 @@ async function main() {
         type: school.type,
       },
     });
-    schoolIdByName.set(school.name, createdSchool.id);
+    schoolsByName.set(school.name, createdSchool);
 
     for (const department of school.departments) {
       const createdDepartment = await prisma.department.upsert({
@@ -487,89 +212,487 @@ async function main() {
           category: department.category,
         },
       });
-      departmentIdByKey.set(`${school.name}::${department.name}`, createdDepartment.id);
+      departmentsByKey.set(`${school.name}::${department.name}`, createdDepartment);
     }
   }
 
-  for (const user of USERS) {
-    const createdUser = await prisma.user.upsert({
-      where: { email: user.email },
+  console.log("Seed tamamlandı: skills, courses, schools/departments.");
+
+  await seedDemoUsers({ skillsByName, topicsByKey, schoolsByName, departmentsByKey });
+
+  console.log("Seed tamamlandı: demo kullanıcılar (matching-education).");
+
+  await seedMissionsAndAchievements(skillsByName);
+
+  console.log("Seed tamamlandı: missions, achievements.");
+}
+
+async function seedMissionsAndAchievements(skillsByName: Map<string, Skill>) {
+  const ACHIEVEMENTS = [
+    { code: "FIRST_EXCHANGE", title: "İlk Exchange", description: "İlk skill'ini ekledin." },
+    { code: "FIRST_GUIDE_SESSION", title: "İlk Guide Session", description: "İlk rehberlik session'ını tamamladın." },
+    { code: "TEN_PEOPLE_HELPED", title: "10 Kişiye Yardım", description: "10 farklı kişiye rehberlik sağladın." },
+    { code: "SCHOOL_GUIDE", title: "School Guide", description: "Okulunda aktif bir rehber oldun." },
+  ];
+  for (const a of ACHIEVEMENTS) {
+    await prisma.achievement.upsert({ where: { code: a.code }, update: {}, create: a });
+  }
+
+  const MISSIONS: { title: string; description: string; type: "SKILL" | "GUIDE"; skillName?: string; instructions: string; rewardPoints: number }[] = [
+    {
+      title: "Python ile küçük bir proje paylaş",
+      description: "Öğrendiğin/öğrettiğin bir Python konusunu gerçek hayatta uygula.",
+      type: "SKILL",
+      skillName: "Python",
+      instructions: "Kısa bir Python scripti yaz ve session partnerine göster.",
+      rewardPoints: 15,
+    },
+    {
+      title: "Bir arkadaşına bölümünü tanıt",
+      description: "Guide Mission: bölümün hakkında birine rehberlik et.",
+      type: "GUIDE",
+      instructions: "Bölüm/okulun hakkında 30 dakikalık bir 'Bölümü Tanıma' session'ı yap.",
+      rewardPoints: 30,
+    },
+    {
+      title: "Yeni bir dil pratiği yap",
+      description: "Bir dil skill'inde konuşma pratiği session'ı yap.",
+      type: "SKILL",
+      skillName: "İngilizce",
+      instructions: "15 dakikalık bir konuşma pratiği session'ı planla ve tamamla.",
+      rewardPoints: 10,
+    },
+  ];
+
+  for (const m of MISSIONS) {
+    const skillId = m.skillName ? skillsByName.get(m.skillName)?.id : undefined;
+    const existing = await prisma.mission.findFirst({ where: { title: m.title } });
+    if (!existing) {
+      await prisma.mission.create({
+        data: {
+          title: m.title,
+          description: m.description,
+          type: m.type,
+          skillId: skillId ?? null,
+          instructions: m.instructions,
+          rewardPoints: m.rewardPoints,
+        },
+      });
+    }
+  }
+}
+
+// ---------- Demo kullanıcılar (student2 / feature/matching-education) ----------
+// Auth branch henüz gerçek Supabase kullanıcıları üretmediği için /skills, /dersler,
+// /okullar, /eslesme sayfalarını test edilebilir kılan sabit id'li demo kullanıcılar.
+// Bkz. src/lib/matching-education/current-user.ts (dev-only fallback bu kullanıcılara düşer).
+
+type SeedContext = {
+  skillsByName: Map<string, Skill>;
+  topicsByKey: Map<string, CourseTopic>;
+  schoolsByName: Map<string, School>;
+  departmentsByKey: Map<string, Department>;
+};
+
+type DemoUserSpec = {
+  id: string;
+  email: string;
+  name: string;
+  city: string | null;
+  country: string | null;
+  network: "TURKIYE" | "GLOBAL";
+  gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+  genderPreference?: "MALE" | "FEMALE" | "EVERYONE";
+  languages?: string[];
+  lifestyle?: {
+    socialEnergy?: "LOW" | "MEDIUM" | "HIGH";
+    planningStyle?: "PLANNED" | "SPONTANEOUS";
+    pace?: "CALM" | "ACTIVE";
+    groupSizePreference?: "SMALL_GROUP" | "LARGE_GROUP" | "EITHER";
+    matchModePreference?: "SIMILAR" | "COMPLEMENTARY" | "OPPOSITE" | "NO_PREFERENCE";
+    interests?: string[];
+    hobbies?: string[];
+    isNewInCity?: boolean;
+  };
+  teach?: { skill: string; level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" }[];
+  learn?: { skill: string; level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" }[];
+  teachTopics?: { course: string; topic: string; level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" }[];
+  learnTopics?: { course: string; topic: string; level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" }[];
+  education?: {
+    school: string;
+    department?: string;
+    yearStatus?: "PREP" | "YEAR_1" | "YEAR_2" | "YEAR_3" | "YEAR_4" | "GRADUATE";
+  };
+  guide?: { topics: string[]; sessionDurations: number[]; guideType: "STUDENT" | "ALUMNI" };
+};
+
+const DEMO_USERS: DemoUserSpec[] = [
+  {
+    id: "11111111-1111-4111-8111-111111111111",
+    email: "demo.ayse@skillswap.local",
+    name: "Ayşe Yılmaz",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    gender: "FEMALE",
+    genderPreference: "EVERYONE",
+    languages: ["Türkçe", "İngilizce"],
+    lifestyle: {
+      socialEnergy: "MEDIUM",
+      planningStyle: "PLANNED",
+      pace: "CALM",
+      groupSizePreference: "SMALL_GROUP",
+      matchModePreference: "SIMILAR",
+      interests: ["Kahve", "Kitap"],
+      hobbies: ["Gitar"],
+    },
+    teach: [
+      { skill: "Python", level: "ADVANCED" },
+      { skill: "Figma", level: "INTERMEDIATE" },
+    ],
+    learn: [{ skill: "Machine Learning", level: "BEGINNER" }],
+    teachTopics: [{ course: "Matematik", topic: "Türev", level: "ADVANCED" }],
+    education: { school: "İstanbul Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: "YEAR_3" },
+    guide: {
+      topics: ["Bölümümü tanıtabilirim", "Hazırlık nasıl?"],
+      sessionDurations: [30, 60],
+      guideType: "STUDENT",
+    },
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222222",
+    email: "demo.mert@skillswap.local",
+    name: "Mert Kaya",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    gender: "MALE",
+    genderPreference: "EVERYONE",
+    languages: ["Türkçe", "İngilizce", "Almanca"],
+    lifestyle: {
+      socialEnergy: "MEDIUM",
+      planningStyle: "PLANNED",
+      pace: "ACTIVE",
+      groupSizePreference: "EITHER",
+      matchModePreference: "COMPLEMENTARY",
+      interests: ["Yapay zeka", "Girişimcilik"],
+    },
+    teach: [
+      { skill: "Machine Learning", level: "EXPERT" },
+      { skill: "JavaScript", level: "ADVANCED" },
+    ],
+    learn: [{ skill: "Almanca", level: "BEGINNER" }],
+    education: { school: "İstanbul Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: "GRADUATE" },
+    guide: {
+      topics: ["Staj ve kulüp deneyimimi paylaşabilirim.", "Bu bölümü seçmeden önce bilmem gerekenler neler?"],
+      sessionDurations: [30, 60],
+      guideType: "ALUMNI",
+    },
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333333",
+    email: "demo.zeynep@skillswap.local",
+    name: "Zeynep Demir",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    gender: "FEMALE",
+    genderPreference: "EVERYONE",
+    languages: ["Türkçe", "İngilizce"],
+    lifestyle: {
+      socialEnergy: "HIGH",
+      planningStyle: "SPONTANEOUS",
+      pace: "ACTIVE",
+      groupSizePreference: "LARGE_GROUP",
+      matchModePreference: "COMPLEMENTARY",
+      interests: ["Sinema", "Seyahat"],
+      isNewInCity: true,
+    },
+    teach: [{ skill: "Fotoğrafçılık", level: "ADVANCED" }],
+    learn: [
+      { skill: "Python", level: "BEGINNER" },
+      { skill: "Excel", level: "BEGINNER" },
+    ],
+    learnTopics: [{ course: "Matematik", topic: "İntegral", level: "BEGINNER" }],
+    education: { school: "Boğaziçi Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: "YEAR_2" },
+  },
+  {
+    id: "44444444-4444-4444-8444-444444444444",
+    email: "demo.can@skillswap.local",
+    name: "Can Öztürk",
+    city: "Ankara",
+    country: "Türkiye",
+    network: "TURKIYE",
+    gender: "MALE",
+    genderPreference: "EVERYONE",
+    languages: ["Türkçe"],
+    lifestyle: {
+      socialEnergy: "LOW",
+      planningStyle: "PLANNED",
+      pace: "CALM",
+      groupSizePreference: "EITHER",
+      matchModePreference: "NO_PREFERENCE",
+      interests: ["Satranç"],
+    },
+    teach: [{ skill: "Excel", level: "INTERMEDIATE" }],
+    learn: [
+      { skill: "JavaScript", level: "BEGINNER" },
+      { skill: "Python", level: "BEGINNER" },
+    ],
+    learnTopics: [{ course: "Bilgisayar Bilimleri", topic: "Veri Yapıları", level: "BEGINNER" }],
+    education: { school: "Orta Doğu Teknik Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: "YEAR_1" },
+  },
+  {
+    id: "55555555-5555-4555-8555-555555555555",
+    email: "demo.elif@skillswap.local",
+    name: "Elif Şahin",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    gender: "FEMALE",
+    genderPreference: "EVERYONE",
+    languages: ["Türkçe", "İngilizce"],
+    lifestyle: {
+      socialEnergy: "HIGH",
+      planningStyle: "SPONTANEOUS",
+      pace: "ACTIVE",
+      groupSizePreference: "SMALL_GROUP",
+      matchModePreference: "SIMILAR",
+      interests: ["Psikoloji", "Kitap"],
+    },
+    teach: [
+      { skill: "Public Speaking", level: "ADVANCED" },
+      { skill: "İngilizce", level: "EXPERT" },
+    ],
+    learn: [{ skill: "Gitar", level: "BEGINNER" }],
+    teachTopics: [{ course: "Fizik", topic: "Newton Yasaları", level: "ADVANCED" }],
+    education: { school: "Boğaziçi Üniversitesi", department: "Psikoloji", yearStatus: "YEAR_3" },
+    guide: {
+      topics: ["Bölümümü tanıtabilirim", "Bu bölümü seçmeden önce bilmem gerekenler neler?"],
+      sessionDurations: [30],
+      guideType: "STUDENT",
+    },
+  },
+  {
+    id: "66666666-6666-4666-8666-666666666666",
+    email: "demo.deniz@skillswap.local",
+    name: "Deniz Aydın",
+    city: "Berlin",
+    country: "Almanya",
+    network: "GLOBAL",
+    gender: "OTHER",
+    genderPreference: "EVERYONE",
+    languages: ["Almanca", "İngilizce", "Türkçe"],
+    lifestyle: {
+      socialEnergy: "MEDIUM",
+      planningStyle: "PLANNED",
+      pace: "CALM",
+      groupSizePreference: "EITHER",
+      matchModePreference: "OPPOSITE",
+      interests: ["Kültür", "Yemek"],
+    },
+    teach: [
+      { skill: "Almanca", level: "EXPERT" },
+      { skill: "Public Speaking", level: "INTERMEDIATE" },
+    ],
+    learn: [{ skill: "Python", level: "BEGINNER" }],
+  },
+  {
+    id: "77777777-7777-4777-8777-777777777777",
+    email: "demo.selin@skillswap.local",
+    name: "Selin Arslan",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    gender: "FEMALE",
+    genderPreference: "EVERYONE",
+    languages: ["Türkçe", "İngilizce"],
+    lifestyle: {
+      socialEnergy: "MEDIUM",
+      planningStyle: "SPONTANEOUS",
+      pace: "ACTIVE",
+      groupSizePreference: "SMALL_GROUP",
+      matchModePreference: "COMPLEMENTARY",
+      interests: ["Müzik", "Gitar"],
+      isNewInCity: true,
+    },
+    teach: [{ skill: "Gitar", level: "ADVANCED" }],
+    learn: [
+      { skill: "Figma", level: "BEGINNER" },
+      { skill: "Machine Learning", level: "BEGINNER" },
+    ],
+    learnTopics: [{ course: "Matematik", topic: "Lineer Cebir", level: "BEGINNER" }],
+    education: {
+      school: "İstanbul Teknik Üniversitesi",
+      department: "Elektrik-Elektronik Mühendisliği",
+      yearStatus: "YEAR_2",
+    },
+  },
+  // Yeni: daha önce hiç kullanıcısı olmayan okulları (Koç, İstanbul Ü,
+  // Marmara) da kapsayacak 3 ek örnek kullanıcı.
+  {
+    id: "88888888-8888-4888-8888-888888888888",
+    email: "demo.kerem@skillswap.local",
+    name: "Kerem Yıldız",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    teach: [{ skill: "Machine Learning", level: "INTERMEDIATE" }],
+    learn: [{ skill: "Gitar", level: "BEGINNER" }],
+    education: { school: "Koç Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: "YEAR_3" },
+  },
+  {
+    id: "99999999-9999-4999-8999-999999999999",
+    email: "demo.irem@skillswap.local",
+    name: "İrem Çelik",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    teach: [{ skill: "Almanca", level: "INTERMEDIATE" }],
+    learn: [{ skill: "Excel", level: "BEGINNER" }],
+    education: { school: "İstanbul Üniversitesi", department: "Hukuk", yearStatus: "YEAR_1" },
+  },
+  {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    email: "demo.onur@skillswap.local",
+    name: "Onur Kaya",
+    city: "İstanbul",
+    country: "Türkiye",
+    network: "TURKIYE",
+    teach: [{ skill: "Fotoğrafçılık", level: "BEGINNER" }],
+    learn: [{ skill: "JavaScript", level: "BEGINNER" }],
+    education: { school: "Marmara Üniversitesi", department: "Bilgisayar Mühendisliği", yearStatus: "PREP" },
+  },
+];
+
+async function seedDemoUsers(ctx: SeedContext) {
+  const { skillsByName, topicsByKey, schoolsByName, departmentsByKey } = ctx;
+
+  function requireSkill(name: string) {
+    const found = skillsByName.get(name);
+    if (!found) throw new Error(`Seed skill bulunamadı: ${name}`);
+    return found;
+  }
+  function requireTopic(courseName: string, topicName: string) {
+    const found = topicsByKey.get(`${courseName}::${topicName}`);
+    if (!found) throw new Error(`Seed course topic bulunamadı: ${courseName}::${topicName}`);
+    return found;
+  }
+  function requireSchool(name: string) {
+    const found = schoolsByName.get(name);
+    if (!found) throw new Error(`Seed school bulunamadı: ${name}`);
+    return found;
+  }
+  function requireDepartment(schoolName: string, departmentName: string) {
+    const found = departmentsByKey.get(`${schoolName}::${departmentName}`);
+    if (!found) throw new Error(`Seed department bulunamadı: ${schoolName}::${departmentName}`);
+    return found;
+  }
+
+  for (const spec of DEMO_USERS) {
+    const user = await prisma.user.upsert({
+      where: { email: spec.email },
       update: {},
       create: {
-        id: user.id ?? randomUUID(),
-        email: user.email,
-        name: user.name,
-        city: user.city,
-        country: user.country,
-        ageRange: user.ageRange ?? null,
-        gender: user.gender,
-        genderPreference: user.genderPreference,
-        network: user.network ?? Network.TURKIYE,
-        languages: user.languages ?? [],
+        id: spec.id,
+        email: spec.email,
+        name: spec.name,
+        city: spec.city,
+        country: spec.country,
+        network: spec.network,
+        gender: spec.gender,
+        genderPreference: spec.genderPreference,
+        languages: spec.languages ?? [],
       },
     });
 
-    for (const edu of user.educations) {
-      const schoolId = schoolIdByName.get(edu.school);
-      const departmentId = departmentIdByKey.get(`${edu.school}::${edu.department}`);
-      if (!schoolId || !departmentId) {
-        throw new Error(`Seed hatası: ${user.name} için okul/bölüm bulunamadı (${edu.school} / ${edu.department}).`);
-      }
-
-      await prisma.userEducation.upsert({
-        where: {
-          userId_schoolId_departmentId: {
-            userId: createdUser.id,
-            schoolId,
-            departmentId,
-          },
-        },
-        update: { yearStatus: edu.yearStatus },
-        create: {
-          userId: createdUser.id,
-          schoolId,
-          departmentId,
-          yearStatus: edu.yearStatus,
-        },
-      });
-    }
-
-    for (const s of user.skills) {
-      const skillId = skillIdByName.get(s.skill);
-      if (!skillId) {
-        throw new Error(`Seed hatası: ${user.name} için skill bulunamadı (${s.skill}).`);
-      }
-
-      await prisma.userSkill.upsert({
-        where: {
-          userId_skillId_mode: {
-            userId: createdUser.id,
-            skillId,
-            mode: s.mode,
-          },
-        },
-        update: { level: s.level },
-        create: {
-          userId: createdUser.id,
-          skillId,
-          mode: s.mode,
-          level: s.level,
-        },
-      });
-    }
-
-    if (user.lifestyle) {
+    if (spec.lifestyle) {
       await prisma.lifestyleProfile.upsert({
-        where: { userId: createdUser.id },
-        update: user.lifestyle,
-        create: { userId: createdUser.id, ...user.lifestyle },
+        where: { userId: user.id },
+        update: {},
+        create: {
+          userId: user.id,
+          socialEnergy: spec.lifestyle.socialEnergy,
+          planningStyle: spec.lifestyle.planningStyle,
+          pace: spec.lifestyle.pace,
+          groupSizePreference: spec.lifestyle.groupSizePreference,
+          matchModePreference: spec.lifestyle.matchModePreference,
+          interests: spec.lifestyle.interests ?? [],
+          hobbies: spec.lifestyle.hobbies ?? [],
+          isNewInCity: spec.lifestyle.isNewInCity ?? false,
+        },
+      });
+    }
+
+    for (const t of spec.teach ?? []) {
+      const s = requireSkill(t.skill);
+      await prisma.userSkill.upsert({
+        where: { userId_skillId_mode: { userId: user.id, skillId: s.id, mode: "TEACH" } },
+        update: { level: t.level },
+        create: { userId: user.id, skillId: s.id, mode: "TEACH", level: t.level },
+      });
+    }
+    for (const l of spec.learn ?? []) {
+      const s = requireSkill(l.skill);
+      await prisma.userSkill.upsert({
+        where: { userId_skillId_mode: { userId: user.id, skillId: s.id, mode: "LEARN" } },
+        update: { level: l.level },
+        create: { userId: user.id, skillId: s.id, mode: "LEARN", level: l.level },
+      });
+    }
+
+    for (const t of spec.teachTopics ?? []) {
+      const top = requireTopic(t.course, t.topic);
+      await prisma.userCourseTopic.upsert({
+        where: { userId_topicId_mode: { userId: user.id, topicId: top.id, mode: "TEACH" } },
+        update: { level: t.level },
+        create: { userId: user.id, topicId: top.id, mode: "TEACH", level: t.level },
+      });
+    }
+    for (const l of spec.learnTopics ?? []) {
+      const top = requireTopic(l.course, l.topic);
+      await prisma.userCourseTopic.upsert({
+        where: { userId_topicId_mode: { userId: user.id, topicId: top.id, mode: "LEARN" } },
+        update: { level: l.level },
+        create: { userId: user.id, topicId: top.id, mode: "LEARN", level: l.level },
+      });
+    }
+
+    if (spec.education) {
+      const sch = requireSchool(spec.education.school);
+      const dept = spec.education.department ? requireDepartment(spec.education.school, spec.education.department) : null;
+      const existingEducation = await prisma.userEducation.findFirst({
+        where: { userId: user.id, schoolId: sch.id, departmentId: dept?.id ?? null },
+      });
+      if (!existingEducation) {
+        await prisma.userEducation.create({
+          data: {
+            userId: user.id,
+            schoolId: sch.id,
+            departmentId: dept?.id ?? null,
+            yearStatus: spec.education.yearStatus,
+          },
+        });
+      }
+    }
+
+    if (spec.guide) {
+      await prisma.guideProfile.upsert({
+        where: { userId: user.id },
+        update: {
+          topics: spec.guide.topics,
+          sessionDurations: spec.guide.sessionDurations,
+          guideType: spec.guide.guideType,
+        },
+        create: {
+          userId: user.id,
+          topics: spec.guide.topics,
+          sessionDurations: spec.guide.sessionDurations,
+          guideType: spec.guide.guideType,
+        },
       });
     }
   }
-
-  console.log(
-    `Seed tamamlandı: ${SKILLS.length} skill, ${COURSES.length} course, ${SCHOOLS.length} okul, ${USERS.length} örnek kullanıcı.`,
-  );
 }
 
 main()
